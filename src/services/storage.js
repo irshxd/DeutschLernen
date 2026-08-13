@@ -4,6 +4,31 @@ export class StorageService {
   static THEME_KEY = "deutsch_theme_preference";
   static API_KEYS_KEY = "deutsch_api_keys";
   static LEGACY_KEY = "GEMINI_API_KEY";
+  static USER_NAME_KEY = "USER_NAME";
+  static USER_LEVEL_KEY = "CURRENT_LEVEL";
+
+  static getUserProfile() {
+    try {
+      const name = localStorage.getItem(this.USER_NAME_KEY) || "";
+      const level = localStorage.getItem(this.USER_LEVEL_KEY) || "A2";
+      return { name, level };
+    } catch (error) {
+      console.error("StorageService.getUserProfile error:", error);
+      return { name: "", level: "A2" };
+    }
+  }
+
+  static saveUserProfile(name, level) {
+    try {
+      if (name) localStorage.setItem(this.USER_NAME_KEY, name.trim());
+      if (level) localStorage.setItem(this.USER_LEVEL_KEY, level);
+      window.dispatchEvent(new Event("user_profile_changed"));
+      return true;
+    } catch (error) {
+      console.error("StorageService.saveUserProfile error:", error);
+      return false;
+    }
+  }
 
   static async saveProgress(level, topicId, status) {
     try {

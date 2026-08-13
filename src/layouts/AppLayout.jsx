@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Layout, Menu, Button, Drawer, Typography, Space, Avatar, Badge, Grid, theme, Switch, Modal, List, Input, Tag, Divider } from "antd";
+import React, { useState, useEffect } from "react";
+import { Layout, Menu, Button, Drawer, Typography, Space, Avatar, Badge, Grid, theme, Switch, Modal, List, Input, Tag, Divider, Select, message } from "antd";
 import {
   BookOutlined,
   CreditCardOutlined,
@@ -16,29 +16,61 @@ import {
   KeyOutlined,
   DeleteOutlined,
   PlusOutlined,
-  CheckOutlined
+  CheckOutlined,
+  EditOutlined
 } from "@ant-design/icons";
 import { StorageService } from "../services/storage";
 
 const { Header, Content, Sider } = Layout;
-const { Text } = Typography;
+const { Text, Title } = Typography;
 const { useBreakpoint } = Grid;
+const { Option } = Select;
 
 export const AppLayout = ({ children, activeKey, onKeyChange, isDarkMode, onToggleTheme }) => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [keyModalVisible, setKeyModalVisible] = useState(false);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [apiKeys, setApiKeys] = useState(() => StorageService.getApiKeys());
   const [newKeyInput, setNewKeyInput] = useState("");
-  
+
+  const [userProfile, setUserProfile] = useState(() => StorageService.getUserProfile());
+  const [nameInput, setNameInput] = useState(userProfile.name);
+  const [levelSelect, setLevelSelect] = useState(userProfile.level);
+
   const screens = useBreakpoint();
   const { token } = theme.useToken();
-
-  const userName = localStorage.getItem("USER_NAME") || "Mohammed Adil";
-  const userLevel = localStorage.getItem("CURRENT_LEVEL") || "A2";
   const isDesktop = screens.md === undefined ? true : screens.md;
+
+  useEffect(() => {
+    const handleProfileChange = () => {
+      const p = StorageService.getUserProfile();
+      setUserProfile(p);
+      setNameInput(p.name);
+      setLevelSelect(p.level);
+    };
+    window.addEventListener("user_profile_changed", handleProfileChange);
+    
+    if (!userProfile.name) {
+      setProfileModalVisible(true);
+    }
+
+    return () => {
+      window.removeEventListener("user_profile_changed", handleProfileChange);
+    };
+  }, []);
 
   const refreshKeys = () => {
     setApiKeys(StorageService.getApiKeys());
+  };
+
+  const handleSaveProfile = () => {
+    if (!nameInput.trim()) {
+      message.warning("Bitte geben Sie Ihren Namen ein.");
+      return;
+    }
+    StorageService.saveUserProfile(nameInput.trim(), levelSelect);
+    setProfileModalVisible(false);
+    message.success("Profil erfolgreich aktualisiert! 🎉");
   };
 
   const handleAddKey = () => {
@@ -296,14 +328,27 @@ export const AppLayout = ({ children, activeKey, onKeyChange, isDarkMode, onTogg
                 style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
               />
             </Badge>
-            <Space align="center" size="middle" style={{ whiteSpace: "nowrap" }}>
+
+            <div 
+              onClick={() => setProfileModalVisible(true)}
+              style={{
+                cursor: "pointer",
+                padding: "4px 8px",
+                borderRadius: "10px",
+                transition: "background 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                background: isDarkMode ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.03)"
+              }}
+            >
               {isDesktop && (
                 <div style={{ textAlign: "right", lineHeight: 1.1 }}>
                   <Text strong style={{ fontSize: "14px", color: token.colorText, display: "block" }}>
-                    {userName}
+                    {userProfile.name || "Student"}
                   </Text>
-                  <Text type="secondary" style={{ fontSize: "12px", display: "block", color: token.colorTextSecondary }}>
-                    {userLevel} telc Student
+                  <Text type="secondary" style={{ fontSize: "12px", display: "block", color: "#d97706", fontWeight: 700 }}>
+                    {userLevelSelectLabel(userProfile.level)}
                   </Text>
                 </div>
               )}
@@ -311,7 +356,6 @@ export const AppLayout = ({ children, activeKey, onKeyChange, isDarkMode, onTogg
                 size={isDesktop ? 38 : 34}
                 style={{
                   background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
-                  cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -319,7 +363,7 @@ export const AppLayout = ({ children, activeKey, onKeyChange, isDarkMode, onTogg
                 }}
                 icon={<UserOutlined />}
               />
-            </Space>
+            </div>
           </Space>
         </Header>
 
@@ -335,6 +379,78 @@ export const AppLayout = ({ children, activeKey, onKeyChange, isDarkMode, onTogg
           {children}
         </Content>
       </Layout>
+
+      <Modal
+        title={
+          <Space>
+            <UserOutlined style={{ color: "#d97706" }} />
+            <span style={{ fontWeight: 800 }}>{userProfile.name ? "Edit Student Profile" : "Welcome to DeutschLernen!"}</span>
+          </Space>
+        }
+        open={profileModalVisible}
+        onCancel={() => {
+          if (userProfile.name) setProfileModalVisible(false);
+        }}
+        footer={null}
+        destroyOnHidden
+      >
+        <Space direction="vertical" size={16} style={{ width: "100%", marginTop: 8 }}>
+          <Text type="secondary" style={{ fontSize: "13px" }}>
+            Set your display name and target CEFR German level. This is permanently saved in your local browser sandbox.
+          </Text>
+
+          <div>
+            <Text strong style={{ fontSize: "13px", display: "block", marginBottom: 6 }}>
+              Your Name
+            </Text>
+            <Input
+              placeholder="e.g. Irshad Ahmad"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              prefix={<UserOutlined style={{ color: token.colorTextDescription }} />}
+              size="large"
+              style={{ borderRadius: "8px" }}
+            />
+          </div>
+
+          <div>
+            <Text strong style={{ fontSize: "13px", display: "block", marginBottom: 6 }}>
+              Target German Level
+            </Text>
+            <Select
+              value={levelSelect}
+              onChange={setLevelSelect}
+              size="large"
+              style={{ width: "100%" }}
+            >
+              <Option value="A1">A1 - Anfänger (Breakthrough)</Option>
+              <Option value="A2">A2 - Grundlagen (Waystage)</Option>
+              <Option value="B1">B1 - Aufbau (Threshold)</Option>
+              <Option value="B2">B2 - Fortgeschritten (Vantage)</Option>
+              <Option value="C1">C1 - Fachkundig (Effective Proficiency)</Option>
+              <Option value="C2">C2 - Beherrschung (Mastery)</Option>
+            </Select>
+          </div>
+
+          <Button
+            type="primary"
+            block
+            size="large"
+            icon={<CheckOutlined />}
+            onClick={handleSaveProfile}
+            style={{
+              height: "46px",
+              borderRadius: "10px",
+              fontWeight: 700,
+              background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+              border: "none",
+              marginTop: 8
+            }}
+          >
+            Save Profile
+          </Button>
+        </Space>
+      </Modal>
 
       <Modal
         title={
@@ -458,3 +574,7 @@ export const AppLayout = ({ children, activeKey, onKeyChange, isDarkMode, onTogg
     </Layout>
   );
 };
+
+function userLevelSelectLabel(lvl) {
+  return `${lvl || "A2"} telc Student`;
+}

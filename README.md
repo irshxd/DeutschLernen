@@ -1,125 +1,85 @@
-# 🇩🇪 DeutschLernen — AI German Learning & telc Exam Prep Platform
+# DeutschLernen
 
-**DeutschLernen** is a modern, high-performance web application designed to help students master German from level **A1 to C2** and prepare for official **telc examinations**. Powered by **React 19**, **Vite**, **Ant Design**, and **Google Gemini 2.5 Flash**, it provides dynamic textbook lessons, AI speech practice, flashcards, interactive translation, and full mock exam simulations.
+A web application for learning German (A1 through C2) and preparing for telc language certification exams. Built with React, Vite, Ant Design, and the Google Gemini API.
 
----
+## Overview
 
-## 🌟 Key Features
+DeutschLernen combines structured CEFR syllabus tracking with AI-generated study tools. Instead of relying on static courseware, it uses Gemini 2.5 Flash to generate custom daily textbook chapters, evaluate mock exams, translate text with grammatical breakdowns, and power an interactive conversational tutor.
 
-### 1. 📊 Syllabus Explorer (A1 – C2)
-- Complete CEFR level breakdowns (A1 Breakthrough through C2 Mastery).
-- Granular sub-point checklists with auto-mastery progress meters.
-- Permanent progress saving stored locally in the browser.
+All user state—including syllabus progress, flashcard mastery, target level preferences, and API keys—is saved directly in the browser using `localStorage`, eliminating the need for an external database or account setup.
 
-### 2. 📚 Dynamic AI Daily Course Generator
-- Generates brand new, authentic textbook chapter lessons on-demand via **Gemini 2.5 Flash**.
-- **Anti-Repetition Engine**: Automatically tracks generated chapter history and uses dynamic entropy seeds so you never get repeated lessons or duplicate readings.
-- Features grammar concepts, context examples, reading comprehensions with full English translations, vocabulary helpers, and official telc strategy guides.
-- Curated YouTube video lectures mapped to each CEFR level.
+## Features
 
-### 3. 🎴 3D Tactile Flashcards
-- Interactive 3D flip card animations with noun article color indicators (`der` cobalt blue, `die` crimson red, `das` emerald green).
-- Deck mastery tracking ("Kenne ich" vs. "Noch lernen").
-- Real-world context sentences for every word.
+### Syllabus Explorer
+Tracks progress across all CEFR levels (A1 to C2) based on telc exam frameworks. Each topic includes granular sub-point checklists that automatically update topic mastery meters as tasks are completed.
 
-### 4. 🤖 AI Conversation Tutor & Speech Synthesis
-- Chat naturally with **Tutor Lukas**, an AI German tutor configured specifically for your target CEFR level.
-- Integrated **Web Speech Synthesis (`de-DE`)** so you can listen to natural native German pronunciations of tutor messages.
+### Daily Course Generator
+Generates fresh, level-specific German textbook chapters on demand. To prevent content reuse, generation requests track previously created titles and append random entropy seeds to ensure new reading passages, vocabulary tables, and grammar concepts every time.
 
-### 5. 🌐 Quick Translation Box with Grammar Insights
-- Bi-directional translation (English ↔ German) with instant clipboard paste & copy helpers.
-- Deep grammatical analysis: automatically detects noun genders (`der/die/das`), plural forms, and formal (`Sie`) vs. informal (`du`) registers.
+### 3D Flashcards
+Vocabulary cards featuring 3D flip animations, noun article color-coding (der, die, das), example sentences, and spaced retention tracking.
 
-### 6. 📝 telc Mock Exam Simulator & AI Examiner
-- Full multi-part exam simulator covering:
-  - **Leseverstehen (Reading)**: Matching notices and comprehension questions.
-  - **Hörverstehen (Listening)**: Audio voice transcripts powered by Web Speech API.
-  - **Schreiben (Writing)**: Formally structured email/letter writing tasks.
-  - **Sprechen (Speaking)**: Voice recording input using **Web Speech Recognition** (`de-DE`).
-- **AI Examiner Grading**: Evaluates responses under official telc criteria, providing objective score breakdowns, writing/speaking feedback, grammatical corrections, and a final score out of 100.
+### AI Conversation Tutor
+An interactive tutor matching your selected CEFR level. Supports native German audio playback via browser Web Speech Synthesis.
 
-### 7. 👤 Permanent Local Profile & Multi API Key Sandbox
-- **Zero Database Required**: User names, target CEFR levels, progress, and Gemini API keys are permanently saved in client-side browser `localStorage`.
-- Support for managing multiple Google Gemini API keys with active key switching.
+### Quick Translation
+Bi-directional translation (EN ↔ DE) that automatically identifies noun genders, plural forms, and register formality (Sie vs. du).
 
----
+### telc Mock Exam Simulator
+Full exam practice covering Reading, Listening, Writing, and Speaking:
+- Audio playback for listening transcripts
+- Voice-to-text recording for speaking responses via browser SpeechRecognition
+- AI evaluation providing objective scoring, writing/speaking feedback, grammar corrections, and an overall score out of 100
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Frontend**: React 19, Vite, Ant Design (Custom Golden Amber & Obsidian Dark theme).
-- **AI Engine**: `@google/generative-ai` (Gemini 2.5 Flash).
-- **Audio & Speech**: Browser Web Speech API (`SpeechSynthesis` & `SpeechRecognition`).
-- **Backend Server**: Node.js Express static server ([`server.js`](file:///Users/irshadmohd/Desktop/deutsch-site/server.js)).
+- Frontend: React 19, Vite, Ant Design
+- Styling: Custom CSS with dark and light theme tokens
+- AI Integration: `@google/generative-ai` (Gemini 2.5 Flash)
+- Audio/Speech: Browser Web Speech API (Synthesis & Recognition)
+- Server: Node.js with Express (`server.js`)
 
----
+## Getting Started
 
-## 🚀 Getting Started
+### Installation
 
-### Prerequisites
-- **Node.js**: v18.0.0 or higher
-- **npm**: v9.0.0 or higher
-
-### Local Development
-
-1. **Clone & Install Dependencies**:
+1. Install dependencies:
    ```bash
-   git clone https://github.com/your-username/deutsch-site.git
-   cd deutsch-site
    npm install
    ```
 
-2. **Run Dev Server**:
+2. Start the development server:
    ```bash
    npm run dev
    ```
-   Open `http://localhost:5173` in your browser.
 
-3. **Configure API Key**:
-   - Open the app, click **API Keys** in the header, and add your free **Google Gemini API Key** from [Google AI Studio](https://aistudio.google.com/).
+3. Configure your API key:
+   Click "API Keys" in the top navigation header and enter a Gemini API key from Google AI Studio.
 
----
+### Production Build & Server
 
-## 📦 Production Build & Local Server
-
-To build the static application and serve it via Node.js Express:
+To build the static bundle and run the Node server locally:
 
 ```bash
-# 1. Build production static bundle
 npm run build
-
-# 2. Start Node production server
 npm start
-# OR: node server.js
 ```
-The server will run on `http://localhost:3000` (or `process.env.PORT`).
 
----
+The Express server runs on `http://localhost:3000` (or `process.env.PORT`).
 
-## 🌐 Deployment Instructions
+## Deployment
 
-### Vercel (Recommended Static Hosting)
+### Vercel
 ```bash
-# Install Vercel CLI & deploy
 npx vercel --prod
 ```
-- **Build Command**: `npm run build`
-- **Output Directory**: `dist`
+Set the build command to `npm run build` and output directory to `dist`.
 
 ### Netlify
 ```bash
-# Deploy with Netlify CLI
 npx netlify-cli deploy --prod
 ```
-- **Build Command**: `npm run build`
-- **Publish Directory**: `dist`
+Set the build command to `npm run build` and publish directory to `dist`.
 
-### Render / Railway / Heroku / Cloud VPS (Node.js)
-- **Build Command**: `npm run build`
-- **Start Command**: `node server.js` or `npm start`
-- Host platform will automatically assign `process.env.PORT`.
-
----
-
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
+### Render / Railway / Cloud VPS
+Set the build command to `npm run build` and start command to `node server.js`. The host environment provides the `PORT` variable.

@@ -67,7 +67,8 @@ export class AIService {
         `Speak 80% in German matching this level exactly, and 20% in English for corrections. ` +
         `Keep responses concise, perfect for mobile reading. ` +
         `End responses with a practical follow-up question. ` +
-        `If the user makes a grammatical mistake, gently point it out first in English.`;
+        `If the user makes a grammatical mistake, gently point it out first in English. ` +
+        `Always keep the conversation dynamic and fresh, introducing new contextual vocabulary.`;
 
       const model = this.getModel(genAI, { systemInstruction });
 
@@ -95,8 +96,10 @@ export class AIService {
       throw new Error("No active API Key found. Please add one in the Header settings.");
     }
 
-    const fallbackExams = {
-      A1: {
+    const previousExams = StorageService.getGeneratedHistory("exam");
+
+    const fallbackExams = [
+      {
         reading: [
           {
             title: "Teil 1: Schilder und Hinweise (Matching)",
@@ -147,123 +150,93 @@ export class AIService {
           { "id": "s3", "title": "Teil 3: Etwas aushandeln", "prompt": "Planen Sie ein Treffen am Wochenende mit Ihrem Partner." }
         ]
       },
-      B2: {
+      {
         reading: [
           {
-            title: "Teil 1: Schilder und Hinweise (Matching)",
-            text: "Lesen Sie die folgenden Hinweise in einer Behörde.",
+            title: "Teil 1: Wohnungsanzeigen & Hinweise",
+            text: "Lesen Sie die Hinweise im Bürgeramt.",
             questions: [
-              { "id": "r1", "q": "Schild: 'Zutritt für Unbefugte verboten'. Wer darf eintreten?", "options": ["Mitarbeiter der Behörde", "Jeder Besucher", "Niemand"], "answer": "Mitarbeiter der Behörde" },
-              { "id": "r2", "q": "Hinweis: 'Bitte ziehen Sie eine Wartenummer am Automaten vor dem Betreten des Zimmers'.", "options": ["Direkt eintreten", "Zuerst Wartenummer ziehen", "Zettel schreiben"], "answer": "Zuerst Wartenummer ziehen" }
+              { "id": "r1", "q": "Hinweis: 'Terminbuchung nur online möglich'. Was gilt?", "options": ["Ohne Online-Termin kein Zutritt.", "Man kann vor Ort warten.", "Bürgeramt ist geschlossen."], "answer": "Ohne Online-Termin kein Zutritt." },
+              { "id": "r2", "q": "Aushang: 'Ruhezeiten im Mietshaus von 22 bis 7 Uhr'. Was bedeutet das?", "options": ["Nachts keine laute Musik machen.", "Tagsüber leise sein.", "Kein Besuch gestattet."], "answer": "Nachts keine laute Musik machen." }
             ]
           },
           {
-            title: "Teil 2: Lesetext (Reading Comprehension)",
-            text: "Die fortschreitende Digitalisierung verändert die deutsche Arbeitswelt grundlegend. Immer mehr Unternehmen bieten flexible Arbeitszeiten und Homeoffice-Optionen an. Dies steigert einerseits die Mitarbeiterzufriedenheit, führt jedoch andererseits zu einer Verschmelzung von Freizeit und Beruf, was gesundheitliche Belastungen zur Folge haben kann.",
+            title: "Teil 2: E-Mail von der Hausverwaltung",
+            text: "Sehr geehrte Mieterinnen und Mieter, am nächsten Dienstag finden zwischen 8:00 und 12:00 Uhr Wartungsarbeiten an den Wasserleitungen statt. Bitte halten Sie in dieser Zeit die Haupthähne geschlossen.",
             questions: [
-              { "id": "r3", "q": "Laut Text hat Homeoffice ausschließlich positive Auswirkungen auf Arbeitnehmer.", "options": ["Richtig", "Falsch"], "answer": "Falsch" },
-              { "id": "r4", "q": "Die fortschreitende Digitalisierung führt zu flexibleren Arbeitszeiten.", "options": ["Richtig", "Falsch"], "answer": "Richtig" }
+              { "id": "r3", "q": "Am Dienstag gibt es Einschränkungen bei der Wasserversorgung.", "options": ["Richtig", "Falsch"], "answer": "Richtig" },
+              { "id": "r4", "q": "Die Arbeiten dauern den ganzen Tag.", "options": ["Richtig", "Falsch"], "answer": "Falsch" }
             ]
           }
         ],
         listening: [
           {
-            title: "Teil 1: Voicemail / Anrufbeantworter",
-            script: "Hallo Sarah, hier ist Jan. Ich schaffe es heute leider nicht pünktlich zum Treffen, da mein Auto eine Panne hat. Ich denke, ich werde etwa eine halbe Stunde später kommen. Sollen wir uns lieber direkt im Restaurant treffen?",
+            title: "Teil 1: Durchsage im Supermarkt",
+            script: "Liebe Kundinnen und Kunden, heute haben wir frische Bio-Äpfel aus der Region im Angebot für nur 1,99 Euro pro Kilo. Greifen Sie zu!",
             questions: [
-              { "id": "l1", "q": "Warum verspätet sich Jan?", "options": ["Er hat verschlafen.", "Sein Auto hat eine Panne.", "Es gibt viel Verkehr."], "answer": "Sein Auto hat eine Panne." },
-              { "id": "l2", "q": "Wo schlägt Jan vor, sich zu treffen?", "options": ["Bei ihm zu Hause.", "Direkt im Restaurant.", "Am Bahnhof."], "answer": "Direkt im Restaurant." }
-            ]
-          },
-          {
-            title: "Teil 2: Radio Announcement",
-            script: "Herzlich willkommen zu unserem wöchentlichen Wirtschaftsbericht. Heute geht es um den Trend zum nachhaltigen Konsum. Immer mehr deutsche Verbraucher sind bereit, für Bio-Lebensmittel und fair gehandelte Kleidung höhere Preise zu zahlen. Experten deuten dies als langfristigen Wandel im Kaufverhalten.",
-            questions: [
-              { "id": "l3", "q": "Welche Aussage zum nachhaltigen Konsum ist laut Bericht richtig?", "options": ["Deutsche Verbraucher sparen beim Einkauf von Kleidung.", "Nachhaltigkeit wird von Käufern immer mehr geschätzt.", "Experten sehen in Bio-Lebensmitteln einen kurzfristigen Trend."], "answer": "Nachhaltigkeit wird von Käufern immer mehr geschätzt." }
+              { "id": "l1", "q": "Was ist heute im Angebot?", "options": ["Äpfel", "Brot", "Milch"], "answer": "Äpfel" }
             ]
           }
         ],
         writing: {
-          title: "Schreiben: Eine formelle Beschwerde-E-Mail",
-          prompt: "Schreiben Sie eine formelle Beschwerde-E-Mail an ein Online-Möbelhaus. Sie haben einen Tisch bestellt, der beschädigt geliefert wurde.",
+          title: "Schreiben: E-Mail an den Vermieter",
+          prompt: "In Ihrer Wohnung funktioniert die Heizung nicht mehr. Schreiben Sie eine E-Mail an den Vermieter Herr Müller.",
           points: [
-            "Grund für Ihre Beschwerde",
-            "Mängel am Tisch beschreiben",
-            "Einen Vorschlag zur Problemlösung machen (Ersatz oder Rabatt)"
+            "Problem schildern (Heizung kalt)",
+            "Seit wann das Problem besteht",
+            "Um dringenden Handwerkertermin bitten"
           ]
         },
         speaking: [
-          { "id": "s1", "title": "Teil 1: Über sich sprechen", "prompt": "Stellen Sie sich kurz vor und beschreiben Sie Ihren beruflichen Werdegang." },
-          { "id": "s2", "title": "Teil 2: Ein Gespräch führen", "prompt": "Diskutieren Sie mit Ihrem Partner über das Thema: 'Sollte Plastikspielzeug komplett verboten werden?'" },
-          { "id": "s3", "title": "Teil 3: Etwas aushandeln", "prompt": "Planen Sie ein Event mit Ihrem Partner." }
+          { "id": "s1", "title": "Teil 1: Beruf & Alltagsroutine", "prompt": "Beschreiben Sie Ihren typischen Tagesablauf in Deutschland." },
+          { "id": "s2", "title": "Teil 2: Meinung äußern", "prompt": "Diskutieren Sie: 'Sollte der öffentliche Nahverkehr für alle Bürger kostenlos sein?'" }
         ]
       }
-    };
-
-    const getFallbackData = (lvl) => {
-      if (lvl === "A1" || lvl === "A2") return fallbackExams.A1;
-      return fallbackExams.B2;
-    };
+    ];
 
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = this.getModel(genAI);
 
-      const prompt = `Generate a full, authentic mock telc German exam for the ${cefrLevel} level. 
-      You MUST return ONLY a raw JSON object. Do not include markdown formatting or code blocks.
-      Use this exact structure with multiple questions per section to simulate the real exam length:
+      const avoidText = previousExams.length > 0 
+        ? `CRITICAL UNIQUE CONSTRAINT: Do NOT repeat any of these topics/titles previously generated: [${previousExams.join(", ")}].`
+        : "";
+
+      const prompt = `Generate a completely NEW and UNIQUE mock telc German exam for level ${cefrLevel}. 
+      Random seed entropy: ${Date.now()}_${Math.random()}.
+      ${avoidText}
+      
+      You MUST return ONLY a raw JSON object. Do not include markdown code fences or commentary.
+      Structure:
       {
         "reading": [
           {
-            "title": "Teil 1: Schilder und Hinweise (Matching)",
-            "text": "Read the following 3 short signs or notices.",
+            "title": "Teil 1: Schilder und Hinweise",
+            "text": "Unique German text for level ${cefrLevel}.",
             "questions": [
-              { "id": "r1", "q": "Sign 1: [Text of sign]. What does this mean?", "options": ["A", "B", "C"], "answer": "The correct option string" },
-              { "id": "r2", "q": "Sign 2: [Text of sign]. What does this mean?", "options": ["A", "B", "C"], "answer": "The correct option string" }
-            ]
-          },
-          {
-            "title": "Teil 2: Lesetext (Reading Comprehension)",
-            "text": "A medium-length email or newspaper article appropriate for ${cefrLevel}.",
-            "questions": [
-              { "id": "r3", "q": "Question about the text.", "options": ["A", "B", "C"], "answer": "The correct option string" },
-              { "id": "r4", "q": "Another question about the text.", "options": ["A", "B", "C"], "answer": "The correct option string" }
+              { "id": "r1", "q": "Question string", "options": ["A", "B", "C"], "answer": "Correct option" }
             ]
           }
         ],
         "listening": [
           {
-            "title": "Teil 1: Voicemail / Anrufbeantworter",
-            "script": "A German transcript of a short voicemail.",
+            "title": "Teil 1: Hörtext",
+            "script": "Unique German transcript",
             "questions": [
-              { "id": "l1", "q": "Why is the person calling?", "options": ["A", "B", "C"], "answer": "The correct option string" },
-              { "id": "l2", "q": "What should the listener do?", "options": ["A", "B", "C"], "answer": "The correct option string" }
-            ]
-          },
-          {
-            "title": "Teil 2: Radio Announcement",
-            "script": "A German transcript of a radio weather or traffic report.",
-            "questions": [
-              { "id": "l3", "q": "What is the announcement about?", "options": ["A", "B", "C"], "answer": "The correct option string" }
+              { "id": "l1", "q": "Question string", "options": ["A", "B", "C"], "answer": "Correct option" }
             ]
           }
         ],
         "writing": {
-          "title": "Schreiben: Eine kurze Nachricht",
-          "prompt": "You need to cancel an appointment and suggest a new time. Write an email to your colleague.",
-          "points": [
-            "Apologize for canceling.",
-            "Give a reason why you cannot come.",
-            "Suggest a new date and time."
-          ]
+          "title": "Schreiben",
+          "prompt": "Unique writing prompt appropriate for level ${cefrLevel}",
+          "points": ["Point 1", "Point 2", "Point 3"]
         },
         "speaking": [
-          { "id": "s1", "title": "Teil 1: Über sich sprechen", "prompt": "Introduce yourself: Name, Age, Country, Profession, Languages, Hobbies." },
-          { "id": "s2", "title": "Teil 2: Informationen austauschen", "prompt": "Ask your partner 3 questions about their weekend." },
-          { "id": "s3", "title": "Teil 3: Etwas aushandeln", "prompt": "Plan a birthday party with your partner. Discuss: When, Where, Food, Drinks, Present." }
+          { "id": "s1", "title": "Teil 1: Sprechaufgabe", "prompt": "Unique speaking prompt" }
         ]
       }
-      Ensure the German text is highly accurate for the ${cefrLevel} level. Output raw JSON only.`;
+      Ensure raw JSON output only.`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -273,10 +246,15 @@ export class AIService {
         text = text.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
       }
 
-      return JSON.parse(text);
+      const parsed = JSON.parse(text);
+      if (parsed.reading && parsed.reading[0]?.title) {
+        StorageService.addGeneratedHistory("exam", parsed.reading[0].title);
+      }
+      return parsed;
     } catch (error) {
-      console.warn("AIService.generateMockExam API failed, using structured CEFR fallback:", error);
-      return getFallbackData(cefrLevel);
+      console.warn("AIService.generateMockExam API failed, cycling fallback:", error);
+      const fallbackIdx = Math.floor(Math.random() * fallbackExams.length);
+      return fallbackExams[fallbackIdx];
     }
   }
 
@@ -392,8 +370,10 @@ export class AIService {
       throw new Error("No active API Key found. Please add one in the Header settings.");
     }
 
-    const fallbacks = {
-      A1: {
+    const previousChapters = StorageService.getGeneratedHistory("course");
+
+    const fallbacks = [
+      {
         title: "Kapitel 1: Unterwegs in Bayern",
         introduction: "Today we will learn how to greet people, ask for simple directions, and order a beverage in a traditional Bavarian café.",
         grammar: {
@@ -422,8 +402,36 @@ export class AIService {
           ]
         }
       },
-      B2: {
-        title: "Kapitel 4: Zukunft der Mobilität",
+      {
+        title: "Kapitel 2: Wohnungssuche & Mietvertrag",
+        introduction: "Learn key vocabulary for finding an apartment in Germany, reading lease contracts (Mietvertrag), and reporting repair issues.",
+        grammar: {
+          concept: "Wechselpräpositionen mit Dativ & Akkusativ",
+          explanation: "Two-way prepositions (an, auf, hinter, in, neben, über, unter, vor, zwischen) take Dative for position (location) and Accusative for movement (direction).",
+          examples: [
+            { de: "Das Bild hängt an der Wand. (Dativ - Wo?)", en: "The picture hangs on the wall." },
+            { de: "Ich hänge das Bild an die Wand. (Akkusativ - Wohin?)", en: "I hang the picture onto the wall." }
+          ]
+        },
+        reading: {
+          text: "Sehr geehrte Frau Schneider, ich interessiere mich für Ihre 2-Zimmer-Wohnung in Berlin-Neukölln. Ich bin berufstätig als Softwareentwickler und rauche nicht. Gerne würde ich einen Besichtigungstermin vereinbaren.",
+          translation: "Dear Ms. Schneider, I am interested in your 2-room apartment in Berlin-Neukölln. I am employed as a software developer and do not smoke. I would like to arrange a viewing appointment.",
+          vocabulary: [
+            { word: "die Besichtigung", meaning: "the viewing / inspection" },
+            { word: "die Kaution", meaning: "the security deposit" },
+            { word: "berufstätig", meaning: "employed / working" }
+          ]
+        },
+        speaking_writing_tips: {
+          tip: "When writing formal emails to landlords or official agencies, always start with 'Sehr geehrte Damen und Herren' or 'Sehr geehrte(r) Frau/Herr...'.",
+          phrases: [
+            { de: "Ich bewerbe mich um die Wohnung...", en: "I am applying for the apartment..." },
+            { de: "Mit freundlichen Grüßen", en: "Sincerely yours" }
+          ]
+        }
+      },
+      {
+        title: "Kapitel 3: Zukunft der Arbeitswelt & Digitalisierung",
         introduction: "Lernen Sie, wie Sie komplexe argumentative Diskussionen über die Mobilitätswende führen und zweiteilige Konnektoren einsetzen.",
         grammar: {
           concept: "Zweiteilige Konnektoren (Correlative Conjunctions)",
@@ -433,8 +441,8 @@ export class AIService {
           ]
         },
         reading: {
-          text: "Die Reduzierung des Individualverkehrs in deutschen Großstädten wird kontrovers diskutiert. Befürworter plädieren für einen massiven Ausbau des Schienennetzes und kostenlosen Personennahverkehr. Kritiker hingegen befürchten erhebliche Einschränkungen der persönlichen Freiheit und weisen auf die mangelnde Infrastruktur im ländlichen Raum hin.",
-          translation: "The reduction of individual traffic in major German cities is controversially discussed. Supporters advocate for a massive expansion of the rail network and free public transport. Critics, on the other hand, fear significant restrictions on personal freedom and point to the lack of infrastructure in rural areas.",
+          text: "Die Reduzierung des Individualverkehrs in deutschen Großstädten wird kontrovers diskutiert. Befürworter plädieren für einen massiven Ausbau des Schienennetzes und kostenlosen Personennahverkehr. Kritiker hingegen befürchten erhebliche Einschränkungen der persönlichen Freiheit.",
+          translation: "The reduction of individual traffic in major German cities is controversially discussed. Supporters advocate for a massive expansion of the rail network and free public transport. Critics, on the other hand, fear significant restrictions on personal freedom.",
           vocabulary: [
             { word: "die Mobilitätswende", meaning: "the mobility transition" },
             { word: "Befürworter", meaning: "supporters / advocates" },
@@ -449,24 +457,25 @@ export class AIService {
           ]
         }
       }
-    };
-
-    const getFallback = (lvl) => {
-      if (lvl === "A1" || lvl === "A2" || lvl === "B1") return fallbacks.A1;
-      return fallbacks.B2;
-    };
+    ];
 
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = this.getModel(genAI);
 
-      const prompt = `Act as an expert German textbook author creating a daily lesson for the ${cefrLevel} level. 
-      The style should mimic modern textbooks like "Netzwerk neu" or "Menschen" — highly contextual, explaining rules clearly, providing direct English translations, and offering exam tips.
+      const avoidText = previousChapters.length > 0 
+        ? `CRITICAL NON-REPETITION CONSTRAINT: Do NOT repeat or recycle any of these previously generated chapter topics or titles: [${previousChapters.join(", ")}].`
+        : "";
+
+      const prompt = `Act as an expert German textbook author creating a COMPLETELY NEW daily lesson for level ${cefrLevel}. 
+      Entropy seed: ${Date.now()}_${Math.random()}.
+      ${avoidText}
+      Choose a distinct topic for ${cefrLevel} (e.g., job interview, medical consultation, environmental policy, train travel, university admission, cultural etiquette, etc.).
       
       Return ONLY a raw JSON object with this exact structure:
       {
-        "title": "A catchy chapter title (e.g., 'Kapitel 1: Unterwegs in Bayern')",
-        "introduction": "A brief intro to what we are learning today.",
+        "title": "A unique chapter title (e.g., 'Kapitel 5: ...')",
+        "introduction": "A brief intro in English to what we are learning today.",
         "grammar": {
           "concept": "The grammar rule being taught.",
           "explanation": "Clear explanation in English.",
@@ -475,7 +484,7 @@ export class AIService {
           ]
         },
         "reading": {
-          "text": "A short, level-appropriate text.",
+          "text": "A fresh, level-appropriate German text.",
           "translation": "Full English translation of the text.",
           "vocabulary": [ { "word": "der Begriff", "meaning": "the concept" } ]
         },
@@ -484,7 +493,7 @@ export class AIService {
           "phrases": [ { "de": "Useful phrase", "en": "Translation" } ]
         }
       }
-      Ensure the German text is highly accurate for the ${cefrLevel} level. Do not wrap in markdown code blocks. Output raw JSON only.`;
+      Ensure high linguistic accuracy for level ${cefrLevel}. Do not wrap in markdown code blocks. Output raw JSON only.`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -494,10 +503,15 @@ export class AIService {
         text = text.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
       }
 
-      return JSON.parse(text);
+      const parsed = JSON.parse(text);
+      if (parsed.title) {
+        StorageService.addGeneratedHistory("course", parsed.title);
+      }
+      return parsed;
     } catch (error) {
-      console.warn("AIService.generateDailyCourse API failed, using structured fallback:", error);
-      return getFallback(cefrLevel);
+      console.warn("AIService.generateDailyCourse API failed, cycling fallback:", error);
+      const fallbackIdx = Math.floor(Math.random() * fallbacks.length);
+      return fallbacks[fallbackIdx];
     }
   }
 }

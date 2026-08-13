@@ -6,6 +6,7 @@ export class StorageService {
   static LEGACY_KEY = "GEMINI_API_KEY";
   static USER_NAME_KEY = "USER_NAME";
   static USER_LEVEL_KEY = "CURRENT_LEVEL";
+  static HISTORY_KEY = "deutsch_generated_history";
 
   static getUserProfile() {
     try {
@@ -27,6 +28,30 @@ export class StorageService {
     } catch (error) {
       console.error("StorageService.saveUserProfile error:", error);
       return false;
+    }
+  }
+
+  static getGeneratedHistory(type = "course") {
+    try {
+      const raw = localStorage.getItem(`${this.HISTORY_KEY}_${type}`);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.error("StorageService.getGeneratedHistory error:", e);
+      return [];
+    }
+  }
+
+  static addGeneratedHistory(type = "course", title) {
+    try {
+      if (!title) return;
+      let history = this.getGeneratedHistory(type);
+      if (!history.includes(title)) {
+        history.push(title);
+        if (history.length > 25) history.shift();
+        localStorage.setItem(`${this.HISTORY_KEY}_${type}`, JSON.stringify(history));
+      }
+    } catch (e) {
+      console.error("StorageService.addGeneratedHistory error:", e);
     }
   }
 
